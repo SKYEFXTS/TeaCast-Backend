@@ -5,53 +5,50 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-def load_model(model_type, model_path):
-    """
-    General function to load a model or scaler.
-
-    :param model_type: The type of model (e.g., 'SARIMAX', 'BLSTM', 'scaler_X', 'scaler_y').
-    :param model_path: Path to the model/scaler file.
-    :return: The loaded model/scaler.
-    """
-    try:
-        if model_type == 'SARIMAX' or model_type == 'scaler_X' or model_type == 'scaler_y':
-            return joblib.load(model_path)
-        elif model_type == 'BLSTM':
-            return tf.keras.models.load_model(model_path)
-        else:
-            raise ValueError(f"Unknown model type: {model_type}")
-    except Exception as e:
-        logging.error(f"Error loading {model_type} model/scaler from {model_path}: {e}")
-        raise
-
+# Function to load the SARIMAX model
 def load_sarimax_model(model_path='Model/SARIMAX_Model.pkl'):
-    """Load SARIMAX model."""
-    return load_model('SARIMAX', model_path)
+    """Load the SARIMAX model."""
+    sarimax_model = joblib.load(model_path)
+    return sarimax_model
 
+# Function to load the BLSTM model
 def load_blstm_model(model_path='Model/BLSTM_Model_3.0_v2.keras'):
-    """Load BLSTM model."""
-    return load_model('BLSTM', model_path)
+    """Load the BLSTM model."""
+    blstm_model = tf.keras.models.load_model(model_path)
+    return blstm_model
 
+# Function to load the X scaler
 def load_X_scaler(scaler_path='Model/scaler_X.pkl'):
-    """Load X scaler."""
-    return load_model('scaler_X', scaler_path)
+    """Load the X scaler."""
+    X_scaler = joblib.load(scaler_path)
+    return X_scaler
 
+# Function to load the y scaler
 def load_y_scaler(scaler_path='Model/scaler_y.pkl'):
-    """Load y scaler."""
-    return load_model('scaler_y', scaler_path)
+    """Load the y scaler."""
+    y_scaler = joblib.load(scaler_path)
+    return y_scaler
 
+# Main function to load all components
 def load_all_models():
-    """Load all models and scalers."""
     try:
-        logging.debug("Loading all models and scalers")
-
-        # Load each model and scaler using the utility function
+        logging.debug("Loading SARIMAX model")
         sarimax_model = load_sarimax_model()
+        logging.debug("SARIMAX model loaded")
+
+        logging.debug("Loading BLSTM model")
         blstm_model = load_blstm_model()
+        logging.debug("BLSTM model loaded")
+
+        logging.debug("Loading X_scaler")
         X_scaler = load_X_scaler()
+        logging.debug("X_scaler loaded")
+
+        logging.debug("Loading y_scaler")
         y_scaler = load_y_scaler()
+        logging.debug("y_scaler loaded")
 
         return sarimax_model, blstm_model, X_scaler, y_scaler
     except Exception as e:
-        logging.error(f"Error loading all models or scalers: {e}")
+        logging.error(f"Error loading models or scalers: {e}")
         raise
