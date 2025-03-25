@@ -11,13 +11,13 @@ logging.basicConfig(level=logging.DEBUG)
 @prediction_blueprint.route('/', methods=['GET'])
 def predict():
     try:
-        # Get the prediction result from the service layer
+        # Call service layer for prediction
         prediction = get_prediction()
 
         # Log the prediction
         logging.debug(f'Prediction: {prediction}')
 
-        # Return the prediction as JSON
+        # Return prediction result as JSON
         return jsonify({'prediction': prediction.tolist()})
 
     except ValueError as ve:
