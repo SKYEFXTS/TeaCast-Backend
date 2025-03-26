@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
 from Service.predictionService import get_prediction
 import logging
 
@@ -10,19 +10,22 @@ logging.basicConfig(level=logging.DEBUG)
 
 @prediction_blueprint.route('/', methods=['GET'])
 def predict():
+    """Handles the GET request to fetch predictions."""
     try:
-        # Call service layer for prediction
+        # Get the prediction result from the service layer
         prediction = get_prediction()
 
-        # Log the prediction
-        logging.debug(f'Prediction: {prediction}')
+        # Log the prediction for traceability
+        logging.debug(f'Prediction successfully generated: {prediction}')
 
-        # Return prediction result as JSON
+        # Return the prediction as a JSON response
         return jsonify({'prediction': prediction.tolist()})
 
     except ValueError as ve:
-        logging.error(f'Invalid input: {ve}')
-        return jsonify({'error': 'Invalid input: ' + str(ve)}), 400
+        # Handle invalid input errors
+        logging.error(f'Invalid input error: {ve}')
+        return jsonify({'error': f'Invalid input: {str(ve)}'}), 400
     except Exception as e:
+        # Handle unexpected errors gracefully
         logging.error(f'Internal server error: {e}')
-        return jsonify({'error': 'Internal server error: ' + str(e)}), 500
+        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
