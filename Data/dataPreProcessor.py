@@ -67,22 +67,18 @@ def prepare_data_for_blstm(original_df, sarimax_predictions, forecast_auctions=1
         future_data = []
 
         for i in range(forecast_auctions):
-            try:
-                # Check auction number and reset it if >= 50
-                future_auction_number = 1 if last_auction_number >= 50 else last_auction_number + i
-                future_week = 1 if last_auction_number >= 50 else last_week + i
+            # Increment auction number and week, reset to 1 if >= 50
+            future_auction_number = (last_auction_number + i) % 50 + 1
+            future_week = (last_week + i) % 50 + 1
 
-                # Create a dictionary for future data
-                future_data.append({
-                    "USD_Buying": last_known_data[0],
-                    "Crude_Oil_Price_LKR": last_known_data[1],
-                    "Week": future_week,
-                    "Auction_Number": future_auction_number,
-                    "SARIMAX_Predicted": sarimax_predictions[i]
-                })
-            except Exception as e:
-                logging.error(f"Error in creating future data for auction {i+1}: {e}")
-                return None
+            # Create a dictionary for future data
+            future_data.append({
+                "USD_Buying": last_known_data[0],
+                "Crude_Oil_Price_LKR": last_known_data[1],
+                "Week": future_week,
+                "Auction_Number": future_auction_number,
+                "SARIMAX_Predicted": sarimax_predictions[i]
+            })
 
         # Convert future data into a DataFrame
         future_data_df = pd.DataFrame(future_data)
@@ -93,10 +89,6 @@ def prepare_data_for_blstm(original_df, sarimax_predictions, forecast_auctions=1
         # Fill missing data for 'USD_Buying' and 'Crude_Oil_Price_LKR' using the last known data
         extended_data["USD_Buying"].fillna(last_known_data[0], inplace=True)
         extended_data["Crude_Oil_Price_LKR"].fillna(last_known_data[1], inplace=True)
-
-        # Manually increment 'Week' and 'Auction_Number' for the forecasted rows
-        extended_data["Week"].fillna(last_week + 1, inplace=True)
-        extended_data["Auction_Number"].fillna(last_auction_number + 1, inplace=True)
 
         # Ensure no NaN values are left before scaling
         if extended_data[features].isnull().any().any():

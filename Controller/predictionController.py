@@ -8,7 +8,7 @@ prediction_blueprint = Blueprint('prediction', __name__)
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
-@prediction_blueprint.route('/', methods=['GET'])
+@prediction_blueprint.route('/predict', methods=['GET'])
 def predict():
     """Handles the GET request to fetch predictions."""
     try:
@@ -19,7 +19,7 @@ def predict():
         logging.debug(f'Prediction successfully generated: {prediction}')
 
         # Return the prediction as a JSON response
-        return jsonify({'prediction': prediction.tolist()})
+        return jsonify({'prediction': prediction})
 
     except ValueError as ve:
         # Handle invalid input errors

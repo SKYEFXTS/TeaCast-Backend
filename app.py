@@ -2,7 +2,11 @@ import subprocess
 import sys
 import logging
 from flask import Flask
+
+from Controller.authController import auth_blueprint
 from Controller.predictionController import prediction_blueprint
+from Controller.teaAuctionPriceController import tea_auction_price_blueprint
+from Controller.teaDashboardController import tea_dashboard_blueprint
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -25,8 +29,12 @@ def install_requirements():
 # Initialize Flask app
 app = Flask(__name__)
 
-# Register the prediction route
-app.register_blueprint(prediction_blueprint, url_prefix='/predict')
+# Register the authentication and prediction routes
+app.register_blueprint(auth_blueprint, url_prefix='/auth')
+app.register_blueprint(prediction_blueprint, url_prefix='/data')
+app.register_blueprint(tea_auction_price_blueprint, url_prefix='/data')
+app.register_blueprint(tea_dashboard_blueprint, url_prefix='/data')
+
 
 # Run the Flask app
 if __name__ == '__main__':
