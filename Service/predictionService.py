@@ -41,6 +41,9 @@ def get_prediction():
         # Calculate the final prediction
         final_prediction = sarimax_predictions + predicted_residuals
 
+        # Round the final prediction to integers
+        final_prediction = np.round(final_prediction).astype(int)
+
         # Add predicted_residuals and final_prediction to the DataFrame
         final_prediction_df["Predicted_Residuals"] = np.nan
         final_prediction_df["Final_Prediction"] = np.nan
@@ -54,8 +57,8 @@ def get_prediction():
         # Log the initialized DataFrame
         logging.debug(f"Final prediction DataFrame after prediction:\n{final_prediction_df.tail()}")
 
-        # Return the final prediction
-        return final_prediction
+        # Return the Auction_Number and Final_Prediction
+        return final_prediction_df[["Auction_Number", "Final_Prediction"]].tail(10).to_dict(orient='records')
 
     except Exception as e:
         logging.error(f"Error in getting prediction: {e}")
