@@ -81,9 +81,9 @@ def get_last_row_info(df):
         
     Returns:
         dict: Dictionary containing the last row's date and price information
-        None: If the DataFrame is empty
+        None: If the DataFrame is empty or None
     """
-    if df.empty:
+    if df is None or df.empty:
         return None
 
     # Get the last row

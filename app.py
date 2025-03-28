@@ -36,7 +36,7 @@ def install_requirements():
         raise
 
 # Install dependencies only if necessary (uncomment for development environments)
-# install_requirements()
+install_requirements()
 
 # Initialize Flask app
 app = Flask(__name__)
