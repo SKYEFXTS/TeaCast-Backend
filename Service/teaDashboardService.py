@@ -16,9 +16,9 @@ def get_tea_price_over_time():
         last_50_rows = tea_df[['Price', 'USD_Buying', 'Crude_Oil_Price_LKR']].tail(50).reset_index()
 
         # Prepare the data for the response
-        tea_prices = [{"date": row['Date'].isoformat(), "price": row['Price']} for _, row in last_50_rows.iterrows()]
-        usd_rates = [{"date": row['Date'].isoformat(), "rate": row['USD_Buying']} for _, row in last_50_rows.iterrows()]
-        crude_oil_prices = [{"date": row['Date'].isoformat(), "price": row['Crude_Oil_Price_LKR']} for _, row in last_50_rows.iterrows()]
+        tea_prices = [{"date": row['Date'].isoformat(), "price": round(row['Price'])} for _, row in last_50_rows.iterrows()]
+        usd_rates = [{"date": row['Date'].isoformat(), "rate": round(row['USD_Buying'])} for _, row in last_50_rows.iterrows()]
+        crude_oil_prices = [{"date": row['Date'].isoformat(), "price": round(row['Crude_Oil_Price_LKR'])} for _, row in last_50_rows.iterrows()]
 
         # Return the data as a dictionary
         return {
@@ -57,8 +57,8 @@ def get_average_price_for_category(category_name, file_path):
         # Get all records from the latest auction date
         latest_auction_df = category_df[category_df['Date'] == latest_auction_date]
 
-        # Calculate the average price for the latest auction
-        average_price = float(latest_auction_df['Price'].mean())  # Convert to float
+        # Calculate the average price for the latest auction and round it up to an integer
+        average_price = round(float(latest_auction_df['Price'].mean()))  # Convert to float and round
 
         # Extract the auction number from the first record
         auction_number = int(latest_auction_df['Auction_Number'].iloc[0])  # Convert to int
@@ -73,11 +73,6 @@ def get_average_price_for_category(category_name, file_path):
             'date': auction_date,
             'auction_number': auction_number
         }
-
-    except Exception as e:
-        logging.error(f"Error fetching average price for category {category_name}: {e}")
-        return {'error': f"An error occurred: {str(e)}"}
-
 
     except Exception as e:
         logging.error(f"Error fetching average price for category {category_name}: {e}")
