@@ -1,14 +1,37 @@
+"""
+Data Preprocessor Module
+This module handles the preprocessing of data for machine learning models.
+It provides functionality for scaling input features, inverse scaling predictions,
+and preparing sequential data for the BLSTM model.
+"""
+
 from Data.modelLoader import load_X_scaler, load_y_scaler
 from Data.datasetSaver import save_dataframe_as_csv
 import numpy as np
 import pandas as pd
 import logging
 
-# Configure logging
+# Configure logging for debugging and monitoring
 logging.basicConfig(level=logging.DEBUG)
 
 def scale_input(data_df):
-    """Scales the input features using the pre-loaded X scaler."""
+    """
+    Scales the input features using the pre-loaded X scaler.
+    
+    Args:
+        data_df (pd.DataFrame): DataFrame containing input features:
+            - USD_Buying
+            - Crude_Oil_Price_LKR
+            - Week
+            - Auction_Number
+            - SARIMAX_Predicted
+            
+    Returns:
+        numpy.ndarray: Scaled input features
+        
+    Raises:
+        Exception: If there's an error in scaling the data
+    """
     try:
         # Load the X scaler
         X_scaler = load_X_scaler()
@@ -26,7 +49,18 @@ def scale_input(data_df):
         raise
 
 def inverse_scale_output(prediction):
-    """Inverse scales the prediction output using the pre-loaded y scaler."""
+    """
+    Inverse scales the prediction output using the pre-loaded y scaler.
+    
+    Args:
+        prediction (numpy.ndarray): Scaled prediction values
+        
+    Returns:
+        numpy.ndarray: Inverse scaled prediction values
+        
+    Raises:
+        Exception: If there's an error in inverse scaling
+    """
     try:
         # Load the y scaler
         y_scaler = load_y_scaler()
@@ -42,7 +76,23 @@ def inverse_scale_output(prediction):
 
 def prepare_data_for_blstm(original_df, sarimax_predictions, forecast_auctions=10, seq_length=10, X_scaler=None):
     """
-    Prepares the data for BLSTM by creating sequences of the past auctions' features along with future SARIMAX predictions.
+    Prepares the data for BLSTM by creating sequences of past auctions' features
+    along with future SARIMAX predictions.
+    
+    Args:
+        original_df (pd.DataFrame): Original dataset with historical data
+        sarimax_predictions: SARIMAX model predictions for future auctions
+        forecast_auctions (int): Number of future auctions to forecast (default: 10)
+        seq_length (int): Length of sequences for BLSTM (default: 10)
+        X_scaler: Pre-loaded scaler for input features
+        
+    Returns:
+        tuple: (X_last_10, extended_data)
+            - X_last_10: Last 10 sequences of scaled data for BLSTM
+            - extended_data: DataFrame with original and future data
+            
+    Raises:
+        Exception: If there's an error in data preparation
     """
     features = ["USD_Buying", "Crude_Oil_Price_LKR", "Week", "Auction_Number", "SARIMAX_Predicted"]
 

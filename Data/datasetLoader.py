@@ -1,11 +1,38 @@
+"""
+Dataset Loader Module
+This module handles the loading and preprocessing of the tea auction dataset.
+It provides functionality to load raw data, filter by category and grade,
+and prepare the data for analysis and model training.
+"""
+
 import logging
 import pandas as pd
 
-# Configure logging
+# Configure logging for debugging and monitoring
 logging.basicConfig(level=logging.DEBUG)
 
 def load_and_filter_data(category, grade, sarimax_model):
-    """Loads and filters the dataset by category and grade."""
+    """
+    Loads and filters the dataset by category and grade.
+    
+    Args:
+        category (str): The tea category to filter by (e.g., 'WESTERN HIGH')
+        grade (str): The tea grade to filter by (e.g., 'BOPF/BOPFSp')
+        sarimax_model: Optional SARIMAX model to add predictions to the dataset
+        
+    Returns:
+        pd.DataFrame: Filtered and aggregated dataset with the following columns:
+            - Date (index)
+            - Price (mean)
+            - USD_Buying (first occurrence)
+            - Crude_Oil_Price_LKR (first occurrence)
+            - Week (first occurrence)
+            - Auction_Number (first occurrence)
+            - SARIMAX_Predicted (if model provided)
+            
+    Raises:
+        Exception: If there's an error in data loading or processing
+    """
     try:
         logging.debug("Loading and filtering dataset by category and grade")
 
@@ -36,7 +63,28 @@ def load_and_filter_data(category, grade, sarimax_model):
         raise
 
 def load_dataset(path):
-    """Loads the dataset from the CSV file."""
+    """
+    Loads the dataset from the CSV file and performs initial preprocessing.
+    
+    Args:
+        path (str): Path to the CSV dataset file
+        
+    Returns:
+        pd.DataFrame: Loaded and preprocessed dataset with the following columns:
+            - Date (datetime)
+            - Category
+            - Grade
+            - Price
+            - USD_Buying
+            - Crude_Oil_Price_LKR
+            
+    Raises:
+        FileNotFoundError: If the file doesn't exist
+        pd.errors.EmptyDataError: If the file is empty
+        pd.errors.ParserError: If the file is not in valid CSV format
+        ValueError: If required columns are missing
+        Exception: For other errors during loading or processing
+    """
     try:
         logging.debug("Loading dataset from path: %s", path)
 

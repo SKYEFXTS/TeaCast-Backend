@@ -1,3 +1,10 @@
+"""
+Tea Auction Price Service Module
+This module handles the retrieval and processing of tea auction price data.
+It provides functionality to calculate and format average prices for different tea categories
+and grades from the most recent auctions.
+"""
+
 import pandas as pd
 import logging
 from Data.datasetLoader import load_and_filter_data
@@ -5,9 +12,21 @@ from Data.datasetLoader import load_and_filter_data
 def get_last_auctions_average_prices():
     """
     Calculate the average prices for the last auctions for 3 main tea categories.
+    
+    Returns:
+        list: List of dictionaries containing formatted price data for each category:
+            {
+                'name': 'Category - Grade',
+                'date': 'Formatted Date',
+                'price': 'Formatted Price'
+            }
+            
+    Raises:
+        Exception: If there's an error in data loading or processing
     """
     try:
         # Load and filter data for the specified tea categories and grades
+        # These are the main categories used for price tracking
         WBOPF_df = load_and_filter_data("WESTERN HIGH", "BOPF/BOPFSp", None)
         WBOP_df = load_and_filter_data("WESTERN HIGH", "BOP", None)
         LFBOPF_df = load_and_filter_data("LOW GROWNS", "FBOPF1", None)
@@ -37,7 +56,16 @@ def get_last_auctions_average_prices():
         raise
 
 def create_formatted_entry(name, row_data):
-    """Helper function to format the row data for the frontend response."""
+    """
+    Helper function to format the row data for the frontend response.
+    
+    Args:
+        name (str): Category and grade name
+        row_data (dict): Dictionary containing date and price information
+        
+    Returns:
+        dict: Formatted entry with name, date, and price
+    """
     return {
         'name': name,
         'date': row_data['date'].strftime('%b %d, %Y'),
@@ -47,9 +75,13 @@ def create_formatted_entry(name, row_data):
 def get_last_row_info(df):
     """
     Get the last row's date (from the index), price, and concatenated category and grade as name.
-
-    :param df: DataFrame containing the data
-    :return: A dictionary with the last row's date and price
+    
+    Args:
+        df (pd.DataFrame): DataFrame containing the auction data
+        
+    Returns:
+        dict: Dictionary containing the last row's date and price information
+        None: If the DataFrame is empty
     """
     if df.empty:
         return None

@@ -1,3 +1,10 @@
+"""
+Tea Dashboard Service Module
+This module handles the retrieval and processing of tea market data for dashboard visualizations.
+It provides functionality to fetch historical price data, calculate category averages,
+and prepare data for various dashboard components.
+"""
+
 import pandas as pd
 import logging
 from Data.datasetLoader import load_and_filter_data, load_dataset
@@ -6,16 +13,24 @@ from flask import jsonify
 def get_tea_price_over_time():
     """
     Fetches historical data for Tea Price, USD Rate, and Crude Oil Price over time.
-    :return: A dictionary containing lists of dictionaries for tea prices, USD rates, and crude oil prices
+    
+    Returns:
+        dict: Dictionary containing three lists of historical data:
+            - tea_prices: List of tea prices with dates
+            - usd_rates: List of USD buying rates with dates
+            - crude_oil_prices: List of crude oil prices with dates
+            
+    Raises:
+        Exception: If there's an error in data loading or processing
     """
     try:
         # Load and filter data for the specified tea categories and grades
         tea_df = load_and_filter_data("WESTERN HIGH", "BOPF/BOPFSp", None)
 
-        # Get the last 50 rows of the specified columns
+        # Get the last 50 rows of the specified columns for historical trend analysis
         last_50_rows = tea_df[['Price', 'USD_Buying', 'Crude_Oil_Price_LKR']].tail(50).reset_index()
 
-        # Prepare the data for the response
+        # Prepare the data for the response with proper date formatting
         tea_prices = [{"date": row['Date'].isoformat(), "price": round(row['Price'])} for _, row in last_50_rows.iterrows()]
         usd_rates = [{"date": row['Date'].isoformat(), "rate": round(row['USD_Buying'])} for _, row in last_50_rows.iterrows()]
         crude_oil_prices = [{"date": row['Date'].isoformat(), "price": round(row['Crude_Oil_Price_LKR'])} for _, row in last_50_rows.iterrows()]
@@ -33,12 +48,20 @@ def get_tea_price_over_time():
 
 def get_average_price_for_category(category_name, file_path):
     """
-    Given a category name, this function returns the average price for that category from the latest auction,
-    along with the date of the auction and auction number.
-
-    :param category_name: The name of the tea category (e.g., 'WESTERN MEDIUM')
-    :param file_path: The path to the CSV dataset file
-    :return: A dictionary containing the average price, date, and auction number
+    Calculate the average price for a specific tea category from the latest auction.
+    
+    Args:
+        category_name (str): The name of the tea category (e.g., 'WESTERN MEDIUM')
+        file_path (str): The path to the CSV dataset file
+        
+    Returns:
+        dict: Dictionary containing:
+            - category: Category name
+            - average_price: Rounded average price
+            - date: Formatted auction date
+            - auction_number: Latest auction number
+            OR
+            - error: Error message if processing fails
     """
     try:
         # Load the dataset using the load_dataset function
@@ -80,10 +103,17 @@ def get_average_price_for_category(category_name, file_path):
 
 def get_all_average_prices(file_path):
     """
-    Fetches the average prices for all categories from the dataset.
-
-    :param file_path: The path to the CSV dataset file
-    :return: A dictionary containing the average prices for all categories
+    Fetches the average prices for all tea categories from the dataset.
+    
+    Args:
+        file_path (str): The path to the CSV dataset file
+        
+    Returns:
+        dict: Dictionary containing average price data for all categories,
+              with category names as keys and price information as values.
+              
+    Raises:
+        Exception: If there's an error in data loading or processing
     """
     try:
         # Load the dataset using the load_dataset function
