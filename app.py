@@ -2,6 +2,7 @@ import subprocess
 import sys
 import logging
 from flask import Flask
+from flask_cors import CORS
 
 from Controller.authController import auth_blueprint
 from Controller.predictionController import prediction_blueprint
@@ -29,12 +30,20 @@ def install_requirements():
 # Initialize Flask app
 app = Flask(__name__)
 
+# Initialize Flask app
+app = Flask(__name__)
+
+# Enable CORS for only the '/auth' and '/data' route prefixes
+CORS(app, resources={
+    r"/auth/*": {"origins": "http://localhost:3000"},
+    r"/data/*": {"origins": "http://localhost:3000"}
+})
+
 # Register the authentication and prediction routes
 app.register_blueprint(auth_blueprint, url_prefix='/auth')
 app.register_blueprint(prediction_blueprint, url_prefix='/data')
 app.register_blueprint(tea_auction_price_blueprint, url_prefix='/data')
 app.register_blueprint(tea_dashboard_blueprint, url_prefix='/data')
-
 
 # Run the Flask app
 if __name__ == '__main__':
