@@ -4,7 +4,8 @@ This module handles tea price prediction requests and responses.
 It provides endpoints for fetching ML model predictions and manages the prediction workflow.
 """
 
-from flask import Blueprint, jsonify
+from typing import Dict, List, Any, Tuple, Union
+from flask import Blueprint, jsonify, Response
 from Service.predictionService import get_prediction
 import logging
 
@@ -16,20 +17,32 @@ prediction_blueprint = Blueprint('prediction', __name__)
 logging.basicConfig(level=logging.DEBUG)
 
 @prediction_blueprint.route('/predict', methods=['GET'])
-def predict():
-    """
-    Handles the GET request to fetch tea price predictions.
+def predict() -> Union[Response, Tuple[Response, int]]:
+    """Handles the GET request to fetch tea price predictions.
+    
+    This endpoint processes requests for tea price forecasts by calling
+    the prediction service and returning formatted results. No input
+    parameters are required as predictions are based on historical data
+    already loaded by the service.
     
     Returns:
-        JSON response with:
-        - Success (200): {"prediction": [predicted_values]}
-        - Bad Request (400): {"error": "Invalid input error message"}
-        - Server Error (500): {"error": "Internal server error message"}
+        Union[Response, Tuple[Response, int]]: One of:
+            - Success (200): JSON response with predictions
+            - Bad Request (400): Error message for invalid inputs 
+            - Server Error (500): Error message for processing failures
+    
+    Example response:
+        {
+            "prediction": [
+                {"Auction_Number": 1, "Final_Prediction": 1250},
+                {"Auction_Number": 2, "Final_Prediction": 1240},
+                ...
+            ]
+        }
     """
     try:
         # Get the prediction result from the service layer
-        # This calls the ML models and processes the results
-        prediction = get_prediction()
+        prediction: List[Dict[str, Any]] = get_prediction()
 
         # Log the prediction for traceability and monitoring
         logging.debug(f'Prediction successfully generated: {prediction}')
