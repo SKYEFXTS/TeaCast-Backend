@@ -12,7 +12,8 @@ import logging
 import os
 from sklearn.preprocessing import StandardScaler
 
-from Data.modelLoader import load_X_scaler, load_y_scaler, setup_logging
+from Data.modelLoader import load_X_scaler, load_y_scaler
+from Utilities.loggingConfig import setup_logging
 from Data.datasetSaver import save_dataframe_as_csv
 
 # Create a custom logger for this module
