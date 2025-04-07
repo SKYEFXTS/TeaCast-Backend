@@ -30,7 +30,7 @@ class Config:
     """
     # Server settings
     DEBUG = os.getenv('TEACAST_DEBUG', 'True').lower() in ('true', '1', 't')
-    PORT = int(os.getenv('TEACAST_PORT', '5000'))
+    PORT = int(os.getenv('TEACAST_PORT', '5001'))
     HOST = os.getenv('TEACAST_HOST', '0.0.0.0')
     
     # Logging settings
