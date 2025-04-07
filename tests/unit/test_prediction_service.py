@@ -182,6 +182,6 @@ def test_get_prediction_length_mismatch(sample_data, mock_models, mocker):
     # Mock the BLSTM prediction to return different length
     mocker.patch.object(blstm_model, 'predict', return_value=np.array([[0.1], [0.2], [0.3]]))
 
-    result = get_prediction()
-
-    assert result is None 
+    # The function should raise a ValueError when there's a length mismatch
+    with pytest.raises(ValueError, match="Length mismatch: Residuals .* and SARIMAX predictions"):
+        get_prediction()

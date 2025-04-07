@@ -49,3 +49,4 @@ Data/Final_Prediction.csv
 # Only exclude these if you have a separate way to distribute them
 # Model/*.keras
 # Model/*.pkl
+/coverage.xml
