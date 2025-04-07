@@ -9,13 +9,14 @@ from typing import Tuple, Optional, List, Dict, Union, Any
 import numpy as np
 import pandas as pd
 import logging
+import os
 from sklearn.preprocessing import StandardScaler
 
-from Data.modelLoader import load_X_scaler, load_y_scaler
+from Data.modelLoader import load_X_scaler, load_y_scaler, setup_logging
 from Data.datasetSaver import save_dataframe_as_csv
 
-# Configure logging for debugging and monitoring
-logging.basicConfig(level=logging.DEBUG)
+# Create a custom logger for this module
+logger = logging.getLogger(__name__)
 
 def scale_input(data_df: pd.DataFrame) -> np.ndarray:
     """Scales the input features using the pre-loaded X scaler.
@@ -35,8 +36,11 @@ def scale_input(data_df: pd.DataFrame) -> np.ndarray:
         Exception: If there's an error in scaling the data
     """
     try:
+        logger.info("Scaling input features for prediction")
+        
         # Load the X scaler
         X_scaler = load_X_scaler()
+        logger.debug(f"Input data shape before scaling: {data_df.shape}")
 
         # Prepare the input data
         input_data = np.array([data_df['USD_Buying'], data_df['Crude_Oil_Price_LKR'],
@@ -44,10 +48,11 @@ def scale_input(data_df: pd.DataFrame) -> np.ndarray:
 
         # Reshape to match scaler input shape (1 row, multiple columns)
         input_data = X_scaler.transform(input_data.reshape(1, -1))
+        logger.debug(f"Input data shape after scaling: {input_data.shape}")
 
         return input_data
     except Exception as e:
-        logging.error(f"Error in scaling input data: {e}")
+        logger.error(f"Error in scaling input data: {e}", exc_info=True)
         raise
 
 def inverse_scale_output(prediction: np.ndarray) -> np.ndarray:
@@ -63,16 +68,23 @@ def inverse_scale_output(prediction: np.ndarray) -> np.ndarray:
         Exception: If there's an error in inverse scaling
     """
     try:
+        logger.info("Inverse scaling prediction output")
+        
         # Load the y scaler
         y_scaler = load_y_scaler()
 
         # Reshape prediction for inverse transformation
         prediction_reshaped = prediction.reshape(-1, 1)
+        logger.debug(f"Prediction shape before inverse scaling: {prediction_reshaped.shape}")
 
         # Inverse scale
-        return y_scaler.inverse_transform(prediction_reshaped).flatten()
+        result = y_scaler.inverse_transform(prediction_reshaped).flatten()
+        logger.debug(f"Prediction shape after inverse scaling: {result.shape}")
+        logger.debug(f"Inverse scaled prediction values: {result}")
+        
+        return result
     except Exception as e:
-        logging.error(f"Error in inverse scaling output: {e}")
+        logger.error(f"Error in inverse scaling output: {e}", exc_info=True)
         raise
 
 def prepare_data_for_blstm(
@@ -111,6 +123,8 @@ def prepare_data_for_blstm(
     features = ["USD_Buying", "Crude_Oil_Price_LKR", "Week", "Auction_Number", "SARIMAX_Predicted"]
 
     try:
+        logger.info(f"Preparing data for BLSTM model with forecast horizon: {forecast_auctions} auctions")
+        
         # Prepare historical data and extract last known values
         processed_df = _prepare_historical_data(original_df)
         last_data = _extract_last_known_data(processed_df)
@@ -131,14 +145,15 @@ def prepare_data_for_blstm(
         
         # Scale data and create sequences if scaler is provided
         if X_scaler:
+            logger.info("Using provided scaler to scale and create sequences")
             return _scale_and_create_sequences(extended_data, features, X_scaler, seq_length)
         else:
             error_msg = "X_scaler is required for scaling data."
-            logging.error(error_msg)
+            logger.error(error_msg)
             raise ValueError(error_msg)
             
     except Exception as e:
-        logging.error(f"Error in preparing data for BLSTM: {e}")
+        logger.error(f"Error in preparing data for BLSTM: {e}", exc_info=True)
         raise
 
 def _prepare_historical_data(original_df: pd.DataFrame) -> pd.DataFrame:
@@ -176,7 +191,7 @@ def _extract_last_known_data(df: pd.DataFrame) -> Tuple[np.ndarray, int, int]:
     last_week = df["Week"].iloc[-1]
     last_auction_number = df["Auction_Number"].iloc[-1]
 
-    logging.debug(
+    logger.debug(
         f"Last known data: USD_Buying: {last_known_data[0]}, "
         f"Crude_Oil_Price_LKR: {last_known_data[1]}, "
         f"Week: {last_week}, Auction_Number: {last_auction_number}"
@@ -201,7 +216,7 @@ def _convert_predictions_to_array(
     if isinstance(sarimax_predictions, pd.Series):
         sarimax_predictions = sarimax_predictions.values
 
-    logging.debug(f"SARIMAX predictions received: {sarimax_predictions[:forecast_auctions]}")
+    logger.debug(f"SARIMAX predictions received: {sarimax_predictions[:forecast_auctions]}")
     return sarimax_predictions
 
 def _create_extended_dataset(
@@ -281,7 +296,7 @@ def _scale_and_create_sequences(
     """
     # Ensure no NaN values are left before scaling
     if extended_data[features].isnull().any().any():
-        logging.warning("There are still NaN values in the data before scaling.")
+        logger.warning("There are still NaN values in the data before scaling.")
         # Consider raising an exception here if NaN values are critical
 
     # Scale the data using X_scaler

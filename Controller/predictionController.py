@@ -5,16 +5,17 @@ It provides endpoints for fetching ML model predictions and manages the predicti
 """
 
 from typing import Dict, List, Any, Tuple, Union
-from flask import Blueprint, jsonify, Response
-from Service.predictionService import get_prediction
+from flask import Blueprint, jsonify, Response, request
+import time
 import logging
+from Service.predictionService import get_prediction
 
 # Create Blueprint for the prediction route
 # This blueprint will handle all prediction-related endpoints
 prediction_blueprint = Blueprint('prediction', __name__)
 
-# Configure logging for debugging and monitoring
-logging.basicConfig(level=logging.DEBUG)
+# Get a logger specific to this module
+logger = logging.getLogger(__name__)
 
 @prediction_blueprint.route('/predict', methods=['GET'])
 def predict() -> Union[Response, Tuple[Response, int]]:
@@ -40,22 +41,35 @@ def predict() -> Union[Response, Tuple[Response, int]]:
             ]
         }
     """
+    start_time = time.time()
+    request_id = request.headers.get('X-Request-ID', 'unknown')
+    client_ip = request.remote_addr
+    
+    logger.info(f"Tea price prediction request received - ID: {request_id}, IP: {client_ip}")
+    
     try:
         # Get the prediction result from the service layer
         prediction: List[Dict[str, Any]] = get_prediction()
 
-        # Log the prediction for traceability and monitoring
-        logging.debug(f'Prediction successfully generated: {prediction}')
+        # Calculate processing time
+        elapsed_time = time.time() - start_time
+        
+        # Log the prediction result summary
+        prediction_count = len(prediction) if prediction else 0
+        logger.info(f"Prediction completed successfully - Request ID: {request_id}, Processing time: {elapsed_time:.3f}s, Items: {prediction_count}")
+        logger.debug(f"Detailed prediction result: {prediction}")
 
         # Return the prediction as a JSON response
         return jsonify({'prediction': prediction})
 
     except ValueError as ve:
         # Handle invalid input errors (e.g., missing required parameters)
-        logging.error(f'Invalid input error: {ve}')
+        elapsed_time = time.time() - start_time
+        logger.error(f"Invalid input error - Request ID: {request_id}, Time: {elapsed_time:.3f}s, Error: {str(ve)}")
         return jsonify({'error': f'Invalid input: {str(ve)}'}), 400
     except Exception as e:
         # Handle unexpected errors gracefully
         # This includes ML model errors, data processing errors, etc.
-        logging.error(f'Internal server error: {e}')
+        elapsed_time = time.time() - start_time
+        logger.error(f"Internal server error - Request ID: {request_id}, Time: {elapsed_time:.3f}s, Error: {str(e)}", exc_info=True)
         return jsonify({'error': f'Internal server error: {str(e)}'}), 500

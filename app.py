@@ -7,6 +7,7 @@ and registers all the blueprints for different API endpoints.
 import subprocess
 import sys
 import logging
+import os
 from typing import Dict, List, Set, Optional
 from flask import Flask
 from flask_cors import CORS
@@ -17,8 +18,43 @@ from Controller.predictionController import prediction_blueprint
 from Controller.teaAuctionPriceController import tea_auction_price_blueprint
 from Controller.teaDashboardController import tea_dashboard_blueprint
 
-# Configure logging with debug level for development
-logging.basicConfig(level=logging.DEBUG)
+# Import the setup_logging function from the dedicated logging config module
+from Utilities.loggingConfig import setup_logging
+
+# Environment configuration with defaults
+class Config:
+    """Configuration settings for the application.
+    
+    This class centralizes all configuration settings and loads them from
+    environment variables when available, falling back to sensible defaults.
+    """
+    # Server settings
+    DEBUG = os.getenv('TEACAST_DEBUG', 'True').lower() in ('true', '1', 't')
+    PORT = int(os.getenv('TEACAST_PORT', '5000'))
+    HOST = os.getenv('TEACAST_HOST', '0.0.0.0')
+    
+    # Logging settings
+    LOG_LEVEL = os.getenv('TEACAST_LOG_LEVEL', 'INFO')
+    LOG_DIR = os.getenv('TEACAST_LOG_DIR', 'logs')
+    LOG_FILE = os.path.join(LOG_DIR, os.getenv('TEACAST_LOG_FILE', 'teacast.log'))
+    
+    # CORS settings - in production, these would be restricted
+    CORS_ORIGINS = os.getenv('TEACAST_CORS_ORIGINS', 'http://localhost:3000').split(',')
+
+# Create logs directory if it doesn't exist
+if not os.path.exists(Config.LOG_DIR):
+    os.makedirs(Config.LOG_DIR)
+
+# Configure logging level based on environment setting
+log_level_name = Config.LOG_LEVEL.upper()
+log_level = getattr(logging, log_level_name, logging.INFO)
+
+# Configure centralized logging for the entire application
+setup_logging(log_level=log_level, log_file=Config.LOG_FILE)
+
+# Get the root logger after it's been configured
+logger = logging.getLogger(__name__)
+logger.info(f"TeaCast API initializing with log level: {log_level_name}")
 
 def install_requirements() -> None:
     """Installs the dependencies listed in the 'requirements.txt' file.
@@ -31,11 +67,11 @@ def install_requirements() -> None:
         subprocess.CalledProcessError: If pip install fails
     """
     try:
-        logging.debug("Installing dependencies from requirements.txt")
+        logger.debug("Installing dependencies from requirements.txt")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        logging.info("Dependencies installed successfully.")
+        logger.info("Dependencies installed successfully.")
     except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to install dependencies: {e}")
+        logger.error(f"Failed to install dependencies: {e}")
         raise
 
 def create_app(install_deps: bool = True) -> Flask:
@@ -59,15 +95,17 @@ def create_app(install_deps: bool = True) -> Flask:
     # Initialize Flask app
     flask_app = Flask(__name__)
     
-    # Configure CORS - restrict allowed origins to specific routes
-    # In production, these origins should come from environment variables
+    # Configure CORS - restrict allowed origins based on configuration
     CORS(flask_app, resources={
-        r"/auth/*": {"origins": "http://localhost:3000"},
-        r"/data/*": {"origins": "http://localhost:3000"}
+        r"/auth/*": {"origins": Config.CORS_ORIGINS},
+        r"/data/*": {"origins": Config.CORS_ORIGINS}
     })
     
     # Register all blueprints
     register_blueprints(flask_app)
+    
+    # Log application startup
+    logger.info("TeaCast API initialized successfully")
     
     return flask_app
 
@@ -84,7 +122,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(tea_auction_price_blueprint, url_prefix='/data')
     app.register_blueprint(tea_dashboard_blueprint, url_prefix='/data')
     
-    logging.debug("All blueprints registered successfully")
+    logger.debug("All blueprints registered successfully")
 
 # Create the Flask app
 # In production, set install_deps=False
@@ -93,8 +131,8 @@ app = create_app(install_deps=True)
 # Run the Flask app
 if __name__ == '__main__':
     try:
-        logging.debug("Starting Flask app...")
-        app.run(debug=True)
+        logger.info("Starting TeaCast API server...")
+        app.run(debug=Config.DEBUG, host=Config.HOST, port=Config.PORT)
     except Exception as e:
-        logging.error(f"Error occurred while starting Flask app: {e}")
+        logger.error(f"Error occurred while starting Flask app: {e}", exc_info=True)
         raise

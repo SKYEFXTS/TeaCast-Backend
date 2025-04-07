@@ -10,11 +10,19 @@ import tensorflow as tf
 from tensorflow.keras.models import Model
 import joblib
 import logging
+import os
 from statsmodels.tsa.statespace.sarimax import SARIMAXResultsWrapper
 from sklearn.preprocessing import StandardScaler
 
-# Configure logging for debugging and monitoring
-logging.basicConfig(level=logging.DEBUG)
+# Create a custom logger for this module
+logger = logging.getLogger(__name__)
+
+# Constants for model paths - centralized for easier management
+MODEL_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'Model'))
+SARIMAX_MODEL_PATH = os.path.join(MODEL_DIR, 'SARIMAX_Model.pkl')
+BLSTM_MODEL_PATH = os.path.join(MODEL_DIR, 'BLSTM_Model_3.0_v2.keras')
+X_SCALER_PATH = os.path.join(MODEL_DIR, 'scaler_X.pkl')
+Y_SCALER_PATH = os.path.join(MODEL_DIR, 'scaler_y.pkl')
 
 def load_model(model_type: str, model_path: str) -> Any:
     """General function to load a model or scaler.
@@ -35,21 +43,26 @@ def load_model(model_type: str, model_path: str) -> Any:
         Exception: If there's an error loading the model/scaler
     """
     try:
+        logger.info(f"Loading {model_type} from {model_path}")
+        
         if model_type in ('SARIMAX', 'scaler_X', 'scaler_y'):
             return joblib.load(model_path)
         elif model_type == 'BLSTM':
             return tf.keras.models.load_model(model_path)
         else:
             raise ValueError(f"Unknown model type: {model_type}")
+    except FileNotFoundError:
+        logger.error(f"Model file not found: {model_path}", exc_info=True)
+        raise
     except Exception as e:
-        logging.error(f"Error loading {model_type} model/scaler from {model_path}: {e}")
+        logger.error(f"Error loading {model_type} model/scaler from {model_path}: {str(e)}", exc_info=True)
         raise
 
-def load_sarimax_model(model_path: str = 'Model/SARIMAX_Model.pkl') -> SARIMAXResultsWrapper:
+def load_sarimax_model(model_path: str = SARIMAX_MODEL_PATH) -> SARIMAXResultsWrapper:
     """Load the SARIMAX time series model.
     
     Args:
-        model_path: Path to the SARIMAX model file (default: 'Model/SARIMAX_Model.pkl')
+        model_path: Path to the SARIMAX model file (default: uses the predefined constant)
         
     Returns:
         SARIMAXResultsWrapper: The loaded SARIMAX model
@@ -59,11 +72,11 @@ def load_sarimax_model(model_path: str = 'Model/SARIMAX_Model.pkl') -> SARIMAXRe
     """
     return load_model('SARIMAX', model_path)
 
-def load_blstm_model(model_path: str = 'Model/BLSTM_Model_3.0_v2.keras') -> Model:
+def load_blstm_model(model_path: str = BLSTM_MODEL_PATH) -> Model:
     """Load the Bidirectional LSTM model.
     
     Args:
-        model_path: Path to the BLSTM model file (default: 'Model/BLSTM_Model_3.0_v2.keras')
+        model_path: Path to the BLSTM model file (default: uses the predefined constant)
         
     Returns:
         Model: The loaded BLSTM model
@@ -73,11 +86,11 @@ def load_blstm_model(model_path: str = 'Model/BLSTM_Model_3.0_v2.keras') -> Mode
     """
     return load_model('BLSTM', model_path)
 
-def load_X_scaler(scaler_path: str = 'Model/scaler_X.pkl') -> StandardScaler:
+def load_X_scaler(scaler_path: str = X_SCALER_PATH) -> StandardScaler:
     """Load the input feature scaler.
     
     Args:
-        scaler_path: Path to the X scaler file (default: 'Model/scaler_X.pkl')
+        scaler_path: Path to the X scaler file (default: uses the predefined constant)
         
     Returns:
         StandardScaler: The loaded feature scaler
@@ -87,11 +100,11 @@ def load_X_scaler(scaler_path: str = 'Model/scaler_X.pkl') -> StandardScaler:
     """
     return load_model('scaler_X', scaler_path)
 
-def load_y_scaler(scaler_path: str = 'Model/scaler_y.pkl') -> StandardScaler:
+def load_y_scaler(scaler_path: str = Y_SCALER_PATH) -> StandardScaler:
     """Load the target value scaler.
     
     Args:
-        scaler_path: Path to the y scaler file (default: 'Model/scaler_y.pkl')
+        scaler_path: Path to the y scaler file (default: uses the predefined constant)
         
     Returns:
         StandardScaler: The loaded target scaler
@@ -118,7 +131,7 @@ def load_all_models() -> Tuple[SARIMAXResultsWrapper, Model, StandardScaler, Sta
         Exception: If there's an error loading any of the models or scalers
     """
     try:
-        logging.debug("Loading all models and scalers")
+        logger.info("Loading all models and scalers for prediction")
 
         # Load each model and scaler using the utility function
         sarimax_model = load_sarimax_model()
@@ -126,7 +139,8 @@ def load_all_models() -> Tuple[SARIMAXResultsWrapper, Model, StandardScaler, Sta
         X_scaler = load_X_scaler()
         y_scaler = load_y_scaler()
 
+        logger.info("Successfully loaded all models and scalers")
         return sarimax_model, blstm_model, X_scaler, y_scaler
     except Exception as e:
-        logging.error(f"Error loading all models or scalers: {e}")
+        logger.error(f"Failed to load all models or scalers: {str(e)}", exc_info=True)
         raise
