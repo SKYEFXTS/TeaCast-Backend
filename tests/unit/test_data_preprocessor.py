@@ -91,15 +91,15 @@ def test_prepare_data_for_blstm_no_scaler(sample_data):
     """Test preparing data for BLSTM without scaler."""
     sarimax_predictions = pd.Series([102, 108, 106, 113, 118])
     
-    result = prepare_data_for_blstm(
-        sample_data.copy(),  # Use copy to avoid modifying original
-        sarimax_predictions,
-        forecast_auctions=2,
-        seq_length=3,
-        X_scaler=None
-    )
-    
-    assert result is None
+    # The function should raise a ValueError when no scaler is provided
+    with pytest.raises(ValueError, match="X_scaler is required for scaling data"):
+        prepare_data_for_blstm(
+            sample_data.copy(),  # Use copy to avoid modifying original
+            sarimax_predictions,
+            forecast_auctions=2,
+            seq_length=3,
+            X_scaler=None
+        )
 
 def test_prepare_data_for_blstm_future_data(sample_data, mock_scalers, mocker):
     """Test future data generation in BLSTM preparation."""
@@ -120,4 +120,4 @@ def test_prepare_data_for_blstm_future_data(sample_data, mock_scalers, mocker):
     assert all(col in extended_data.columns for col in ['USD_Buying', 'Crude_Oil_Price_LKR', 'Week', 'Auction_Number', 'SARIMAX_Predicted'])
     # Check only non-Date columns for null values
     non_date_columns = [col for col in extended_data.columns if col != 'Date']
-    assert not extended_data[non_date_columns].isnull().any().any() 
+    assert not extended_data[non_date_columns].isnull().any().any()

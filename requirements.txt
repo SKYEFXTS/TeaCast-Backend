@@ -1,4 +1,5 @@
 flask
+flask-cors
 joblib
 numpy
 scikit-learn
@@ -8,3 +9,4 @@ pytest-cov==4.1.0
 pytest-mock==3.12.0
 pandas==2.1.4
 python-dotenv==1.0.0
+statsmodels
