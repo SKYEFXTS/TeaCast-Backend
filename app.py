@@ -38,8 +38,8 @@ class Config:
     LOG_DIR = os.getenv('TEACAST_LOG_DIR', 'logs')
     LOG_FILE = os.path.join(LOG_DIR, os.getenv('TEACAST_LOG_FILE', 'teacast.log'))
     
-    # CORS settings - in production, these would be restricted
-    CORS_ORIGINS = os.getenv('TEACAST_CORS_ORIGINS', '*').split(',')  # Allow all origins by default in production
+    # CORS settings - allowing the deployed Netlify frontend
+    CORS_ORIGINS = os.getenv('TEACAST_CORS_ORIGINS', 'https://teacast.netlify.app,http://localhost:3000').split(',')
 
 # Create logs directory if it doesn't exist
 if not os.path.exists(Config.LOG_DIR):
