@@ -29,8 +29,8 @@ class Config:
     environment variables when available, falling back to sensible defaults.
     """
     # Server settings
-    DEBUG = os.getenv('TEACAST_DEBUG', 'True').lower() in ('true', '1', 't')
-    PORT = int(os.getenv('TEACAST_PORT', '5001'))
+    DEBUG = os.getenv('TEACAST_DEBUG', 'False').lower() in ('true', '1', 't')
+    PORT = int(os.getenv('PORT', os.getenv('TEACAST_PORT', '5001')))  # Use Render's PORT env var
     HOST = os.getenv('TEACAST_HOST', '0.0.0.0')
     
     # Logging settings
@@ -39,7 +39,7 @@ class Config:
     LOG_FILE = os.path.join(LOG_DIR, os.getenv('TEACAST_LOG_FILE', 'teacast.log'))
     
     # CORS settings - in production, these would be restricted
-    CORS_ORIGINS = os.getenv('TEACAST_CORS_ORIGINS', 'http://localhost:3000').split(',')
+    CORS_ORIGINS = os.getenv('TEACAST_CORS_ORIGINS', '*').split(',')  # Allow all origins by default in production
 
 # Create logs directory if it doesn't exist
 if not os.path.exists(Config.LOG_DIR):
@@ -74,7 +74,7 @@ def install_requirements() -> None:
         logger.error(f"Failed to install dependencies: {e}")
         raise
 
-def create_app(install_deps: bool = True) -> Flask:
+def create_app(install_deps: bool = False) -> Flask:  # Default to False for production
     """Creates and configures the Flask application.
     
     This factory function creates the Flask app, configures CORS settings,
@@ -82,7 +82,7 @@ def create_app(install_deps: bool = True) -> Flask:
     makes it easier to test and to create multiple instances if needed.
     
     Args:
-        install_deps: Whether to install dependencies (default: True)
+        install_deps: Whether to install dependencies (default: False)
             Should be set to False in production environments
             
     Returns:
@@ -126,7 +126,7 @@ def register_blueprints(app: Flask) -> None:
 
 # Create the Flask app
 # In production, set install_deps=False
-app = create_app(install_deps=True)
+app = create_app(install_deps=False)  # Set to False for production deployment
 
 # Run the Flask app
 if __name__ == '__main__':
